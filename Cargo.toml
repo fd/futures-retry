@@ -1,0 +1,11 @@
+[package]
+name = "futures_retry"
+version = "0.1.0"
+authors = ["Simon Menke <simon.menke@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+pin-project = "0.4"
+tracing = { version = "0.1", features = ["log"] }
+tokio = { version = "0.2.0-alpha.6", features = ["macros"] }
+rand = "0.7"
