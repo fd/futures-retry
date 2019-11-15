@@ -9,7 +9,7 @@ pub fn constant(duration: Duration) -> impl Backoff + Sized {
     duration
 }
 
-pub trait Backoff {
+pub trait Backoff: Send {
     fn next_retry(&mut self) -> Duration;
 
     fn exponential(self) -> Exponential<Self>
