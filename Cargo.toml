@@ -1,5 +1,5 @@
 [package]
-name = "futures-retrying"
+name = "futures_retrying"
 version = "0.1.0"
 authors = ["Simon Menke <simon.menke@gmail.com>"]
 edition = "2018"
