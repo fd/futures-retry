@@ -1,3 +1,4 @@
+use futures_timer::Delay;
 use pin_project::pin_project;
 use std::{
     future::Future,
@@ -5,11 +6,12 @@ use std::{
     task::{Context, Poll},
     time::Duration,
 };
-use tokio::timer::{delay_for, Delay};
 
-pub mod backoff;
+mod backoff;
+pub use backoff::*;
 
-use backoff::Backoff;
+#[derive(Clone, Copy, Debug)]
+pub struct Cancelled;
 
 /// Retry a future until it succeeds.
 pub fn retry<R, S>(task: R, scheduler: S) -> Retry<R>
@@ -40,7 +42,7 @@ pub trait Retryable {
     fn call(&self) -> Self::Future;
 
     /// Report the error of the last attempt to complete the task.
-    fn report_error(&self, error: Self::Error, next_retry: Duration) {
+    fn report_error(&self, error: &Self::Error, next_retry: Option<Duration>) {
         tracing::error!(
             "error after retry: {:?} (will retry in {:?})",
             error,
@@ -78,7 +80,7 @@ where
     R: Retryable,
     R::Error: std::fmt::Debug,
 {
-    type Output = R::Item;
+    type Output = Result<R::Item, Cancelled>;
 
     fn poll(self: Pin<&mut Self>, ctx: &mut Context<'_>) -> Poll<Self::Output> {
         let mut this = self.project();
@@ -92,16 +94,21 @@ where
                 RetryState::Trying => {
                     match this.trying_fut.as_mut().as_pin_mut().unwrap().poll(ctx) {
                         Poll::Pending => return Poll::Pending,
-                        Poll::Ready(Ok(result)) => return Poll::Ready(result),
+                        Poll::Ready(Ok(result)) => return Poll::Ready(Ok(result)),
                         Poll::Ready(Err(err)) => {
                             let retry_after = this.scheduler.next_retry();
 
                             // log error
-                            this.retryable.report_error(err, retry_after);
+                            this.retryable.report_error(&err, retry_after);
 
-                            this.trying_fut.set(None);
-                            this.waiting_fut.set(Some(delay_for(retry_after)));
-                            RetryState::Waiting
+                            match retry_after {
+                                None => return Poll::Ready(Err(Cancelled)),
+                                Some(retry_after) => {
+                                    this.trying_fut.set(None);
+                                    this.waiting_fut.set(Some(Delay::new(retry_after)));
+                                    RetryState::Waiting
+                                }
+                            }
                         }
                     }
                 }
