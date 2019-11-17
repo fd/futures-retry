@@ -1,3 +1,4 @@
+use futures_timer::Delay;
 use pin_project::pin_project;
 use std::{
     future::Future,
@@ -5,7 +6,6 @@ use std::{
     task::{Context, Poll},
     time::Duration,
 };
-use tokio::timer::{delay_for, Delay};
 
 pub mod backoff;
 
@@ -100,7 +100,7 @@ where
                             this.retryable.report_error(err, retry_after);
 
                             this.trying_fut.set(None);
-                            this.waiting_fut.set(Some(delay_for(retry_after)));
+                            this.waiting_fut.set(Some(Delay::new(retry_after)));
                             RetryState::Waiting
                         }
                     }
