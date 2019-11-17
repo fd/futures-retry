@@ -1,8 +1,16 @@
 [package]
-name = "futures_retry"
+name = "futures_retrying"
 version = "0.1.0"
 authors = ["Simon Menke <simon.menke@gmail.com>"]
 edition = "2018"
+license = "MIT/Apache-2.0"
+readme = "README.md"
+repository = "https://github.com/fd/futures-retrying"
+homepage = "https://github.com/fd/futures-retrying"
+documentation = "https://docs.rs/futures-retrying"
+description = """
+Runtime agnostic retry for futures.
+"""
 
 [dependencies]
 pin-project = "0.4"
