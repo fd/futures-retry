@@ -15,5 +15,5 @@ Runtime agnostic retry for futures.
 [dependencies]
 pin-project = "0.4"
 tracing = { version = "0.1", features = ["log"] }
-futures-timer = "2.0"
+futures-timer = "3.0"
 rand = "0.7"
